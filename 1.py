@@ -1,2 +1,1 @@
-n = '1 2 3 4 5 6'
-print(','.join(n.split(' ')))
+import datetimen = 'https://github.com/SKAT1005/DavinCHBot/blob/master/filter.py'print(n.startswith('https'))
