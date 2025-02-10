@@ -1,7 +1,7 @@
 from django.db import models
 
 class Tasks(models.Model):
-    global_task_id = models.IntegerField(verbose_name='Id блока задачи')
+    global_task_id = models.CharField(max_length=128, verbose_name='Id блока задачи')
     type = models.CharField(max_length=128, verbose_name='Тип пересылки')
     to_channel = models.CharField(max_length=128, verbose_name='В какой канал пересылка')
     from_channel = models.CharField(max_length=128, verbose_name='Из каких каналов пересылаем')
@@ -10,7 +10,7 @@ class Tasks(models.Model):
     start_date = models.DateTimeField(blank=True, null=True, verbose_name='Дата начала парсинга')
     end_date = models.DateTimeField(blank=True, null=True, verbose_name='Дата конца парсинга')
     is_active = models.BooleanField(default=True, verbose_name='Активен ли запрос')
-    descriptopn = models.TextField(blank=True, null=True, verbose_name='Описание задачи')
+    description = models.TextField(blank=True, null=True, verbose_name='Описание задачи')
 
 
 class Messages(models.Model):
