@@ -5,11 +5,34 @@ class GlobalNumber(models.Model):
     start_date = models.DateTimeField(blank=True, null=True, verbose_name='Дата начала парсинга')
     end_date = models.DateTimeField(blank=True, null=True, verbose_name='Дата конца парсинга')
 
-    def date(self):
-        if self.end_date:
-            return f'{self.start_date.day}.{self.start_date.month}.{self.start_date.year} {self.start_date.hour}:{self.end_date.minute}-{self.end_date.day}.{self.end_date.month}.{self.end_date.year} {self.end_date.hour}:{self.end_date.minute}'
-        else:
-            return f'{self.start_date.day}.{self.start_date.month}.{self.start_date.year} {self.start_date.hour}'
+    def start_date_str(self):
+        months = [
+            "января", "февраля", "марта", "апреля", "мая", "июня",
+            "июля", "августа", "сентября", "октября", "ноября", "декабря"
+        ]
+        dt = self.start_date
+        if dt:
+            day = dt.day
+            month = months[dt.month - 1]  # Индексы в списке начинаются с 0
+            hour = dt.hour
+            minute = dt.minute
+            return f"{day} {month} {hour:02}:{minute:02}"
+        return ''
+    def end_date_str(self):
+        months = [
+            "января", "февраля", "марта", "апреля", "мая", "июня",
+            "июля", "августа", "сентября", "октября", "ноября", "декабря"
+        ]
+        dt = self.end_date
+        if dt:
+            day = dt.day
+            month = months[dt.month - 1]  # Индексы в списке начинаются с 0
+            hour = dt.hour
+            minute = dt.minute
+            return f"{day} {month} {hour:02}:{minute:02}"
+        return ''
+
+
 class Tasks(models.Model):
     global_task_id = models.ForeignKey('GlobalNumber', on_delete=models.CASCADE, related_name='tasks', verbose_name='Id блока задачи')
     type = models.CharField(max_length=128, verbose_name='Тип пересылки')
@@ -18,6 +41,15 @@ class Tasks(models.Model):
     time = models.IntegerField(default=0, verbose_name='Количество минут перед отправкой')
     chance = models.IntegerField(default=100, verbose_name='Шанс отправки сообщения')
     is_active = models.BooleanField(default=True, verbose_name='Активен ли запрос')
+    is_pause = models.BooleanField(default=False, verbose_name='Стоит ли задача на паузе?')
+
+
+    def task_str(self):
+        if not self.is_pause:
+            status = '🟢'
+        else:
+            status = '🔴'
+        return f'{status} {self.id}) {self.from_channel} → {self.to_channel}'
 
 
 class Messages(models.Model):
