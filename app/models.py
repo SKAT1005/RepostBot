@@ -49,7 +49,7 @@ class Tasks(models.Model):
             status = '🟢'
         else:
             status = '🔴'
-        return f'{status} {self.id}) {self.from_channel} → {self.to_channel}'
+        return f'{status} {self.id}) {self.type} {self.from_channel} → {self.to_channel}'
 
 
 class Messages(models.Model):
@@ -63,3 +63,8 @@ class SendMessageTask(models.Model):
     message = models.ForeignKey('Messages', on_delete=models.CASCADE, related_name='messages_task', verbose_name='Сообщение для отправк')
     task = models.ForeignKey('Tasks', on_delete=models.CASCADE, related_name='send_messages_task', verbose_name='Задача для отправки')
     time = models.DateTimeField(verbose_name='Дата отправки')
+
+
+class Channel(models.Model):
+    channel_id = models.CharField(max_length=128, verbose_name='id канала')
+    last_message_id = models.CharField(max_length=128, blank=True, null=True, verbose_name='ID последнего сообщения')

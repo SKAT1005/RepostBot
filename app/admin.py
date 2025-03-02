@@ -14,3 +14,8 @@ class TasksAdmin(admin.ModelAdmin):
 @admin.register(SendMessageTask)
 class TasksAdmin(admin.ModelAdmin):
     pass
+
+
+@admin.register(Channel)
+class ChannelAdmin(admin.ModelAdmin):
+    pass
