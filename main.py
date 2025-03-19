@@ -63,7 +63,7 @@ async def create_task(message):
             start_date, end_date = n[0].split('-')
             end_date = end_date[:-1]
             if start_date == '0':
-                start_date = timezone.now()
+                start_date = timezone.now() + datetime.timedelta(hours=3)
             else:
                 start_date = datetime.datetime.strptime(start_date, "%d.%m.%Y %H:%M")
             if end_date == '0':
@@ -181,7 +181,6 @@ async def create_task(message):
                         logging.error(f"Ошибка при создании задачи 'previousrepostrandomrepostminutes': {e}")
                         await message.reply(f'Не получилось создать задачу, неверный формат ввода:\n {task}')
                 else:
-                    logging.warning(f"Неизвестный тип задачи: {task_type}")
                     await message.reply(f'Не удалось создать {task} т.к неизвестный тип задачи')
         elif first[0].lower() == 'list':
             global_task_ids = await sync_to_async(list)(GlobalNumber.objects.all())
@@ -193,43 +192,43 @@ async def create_task(message):
                     text += f'{task.task_str()}\n'
                 text += '\n=========================\n'
             try:
-                await message.reply(text, parse_mode='HTML')
+                await message.reply(text, parse_mode='HTML', link_preview=False)
             except Exception as e:
-                await message.reply('Задач пока нет')
+                await message.reply('<b>Задач пока нет</b>', parse_mode='HTML')
         elif first[0].lower() == 'del':
             try:
                 id = first[1]
                 global_task = await sync_to_async(GlobalNumber.objects.get)(id=id)
                 await sync_to_async(global_task.delete)()
-                await message.reply(f'🗑 Задача номер {id} удалена')
+                await message.reply(f'🗑 <b>Задача номер {id} удалена</b>', parse_mode='HTML')
             except Exception as e:
-                await message.reply('Неверный ID задачи')
+                await message.reply('<b>Неверный ID задачи</b>', parse_mode='HTML')
         elif first[0].lower() == 'stop':
             try:
                 id = first[1]
                 task = await sync_to_async(Tasks.objects.get)(id=id)
                 await sync_to_async(task.delete)()
-                await message.reply(f'🗑 Подзадача номер {id} удалена')
+                await message.reply(f'🗑 <b>Подзадача номер {id} удалена</b>', parse_mode='HTML')
             except Exception as e:
-                await message.reply('Неверный ID задачи')
+                await message.reply('<b>Неверный ID задачи</b>', parse_mode='HTML')
         elif first[0].lower() == 'pause':
             try:
                 id = first[1]
                 task = await sync_to_async(Tasks.objects.get)(id=id)
                 task.is_pause = True
                 await sync_to_async(task.save)()
-                await message.reply(f'⏸️ Подзадача номер {id} поставлена на паузу')
+                await message.reply(f'⏸️ <b>Подзадача номер {id} поставлена на паузу</b>', parse_mode='HTML')
             except Exception as e:
-                await message.reply('Неверный ID задачи')
+                await message.reply('<b>Неверный ID задачи</b>', parse_mode='HTML')
         elif first[0].lower() == 'play':
             try:
                 id = first[1]
                 task = await sync_to_async(Tasks.objects.get)(id=id)
                 task.is_pause = False
                 await sync_to_async(task.save)()
-                await message.reply(f'▶️️ Подзадача номер {id} снята с паузы')
+                await message.reply(f'▶️️ <b>Подзадача номер {id} снята с паузы</b>', parse_mode='HTML')
             except Exception as e:
-                await message.reply('Неверный ID задачи')
+                await message.reply('<b>Неверный ID задачи</b>', parse_mode='HTML')
         elif first[0].startswith('https'):
             try:
                 if '/+' in first[0]:
@@ -237,34 +236,35 @@ async def create_task(message):
                     n = await client(ImportChatInviteRequest(link))
                 else:
                     n = await client(JoinChannelRequest(first[0]))
-                await message.reply(f'✅Подписка успешна {n.chats[0].id}')
+                await message.reply(f'✅<b>Подписка успешна</b>\n'
+                                    f'id: <code>{n.chats[0].id}</code>', parse_mode='HTML')
 
             except Exception as e:
                 logging.error(f"Не удалось подписаться на канал: {e}")
-                await message.reply('❌Не удалось подписаться, выполните действие вручную')
+                await message.reply('❌ <b>Не удалось подписаться, выполните действие вручную</b>')
         elif first[0].lower() == 'help':
-            text = ('Общие команды: \n'
-                    '• <b>help</b> — <u>Список команд</u>\n'
-                    '• <b>list</b> — <u>Список задач</u>\n'
-                    '• <b>add</b> <ДД.ММ.ГГГГ ЧЧ:ММ или 0>-<ДД.ММ.ГГГГ ЧЧ:ММ или 0> <"Комментарий"> — <u>Создать задачу</u>\n'
-                    '• <b>del</b> <Номер задачи> — <u>Удалить задачу</u>\n'
-                    '• <b>pause</b> <Номер подзадачи> — <u>Пауза для подзадачи</u>\n'
-                    '• <b>play</b> <Номер подзадачи> — <u>Старт для подзадачи</u>\n'
-                    '• <b>stop</b> <Номер подзадачи> — <u>Удалить подзадачу</u>\n\n'
+            text = ('<b><i>Общие команды</b></i>: \n'
+                    '• <b>help</b> <b>—</b> <u>Список команд</u>\n'
+                    '• <b>list</b> <b>—</b> <u>Список задач</u>\n'
+                    '• <b>add</b> <ДД.ММ.ГГГГ ЧЧ:ММ или 0>-<ДД.ММ.ГГГГ ЧЧ:ММ или 0> <"Комментарий"> <b>—</b> <u>Создать задачу</u>\n'
+                    '• <b>del</b> <Номер задачи> <b>—</b> <u>Удалить задачу</u>\n'
+                    '• <b>pause</b> <Номер подзадачи> <b>—</b> <u>Пауза для подзадачи</u>\n'
+                    '• <b>play</b> <Номер подзадачи> <b>—</b> <u>Старт для подзадачи</u>\n'
+                    '• <b>stop</b> <Номер подзадачи> <b>—</b> <u>Удалить подзадачу</u>\n\n'
                     'Репосты:\n'
-                    '• <b>r</b> <id источника ><id получателей через пробел> — <u>Простой репост</u>\n'
-                    '• <b>rr</b> <id источника ><id получателей через пробел> <шанс репоста> — <u>Репост с вероятностью</u>\n'
-                    '• <b>pr</b> <id источника ><id получателей через пробел> — <u>Репост предыдущего поста</u>\n'
-                    '• <b>ppr</b> <id источника ><id получателей через пробел> — <u>Репост пред-предыдущего поста</u>\n'
-                    '• <b>pppr</b> <id источника ><id получателей через пробел> — <u>Репост пред-пред-предыдущего поста</u>\n'
-                    '• <b>rm</b> <id источника ><id получателей через пробел> <задержка в минутах> — <u>Репост с задержкой</u>\n'
-                    '• <b>rrm</b> <id источника ><id получателей через пробел> <шанс репоста> <задержка в минутах> — <u>Рандомный репост с задержкой</u>\n'
-                    '• <b>prrm</b> <id источника ><id получателей через пробел> <шанс репоста> <задержка в минутах> — <u>Рандомный репост предыдущего поста с задержкой</u>\n'
-                    '• <b>pprrm</b> <id источника ><id получателей через пробел> <шанс репоста> <задержка в минутах> — <u>Рандомный репост пред-предыдущего поста с задержкой</u>\n'
-                    '• <b>ppprrm</b> <id источника ><id получателей через пробел> <шанс репоста> <задержка в минутах> — <u>Рандомный репост пред-пред-предыдущего поста с задержкой</u>')
-            await message.reply(text, parse_mode='HTML')
+                    '• <b>r</b> <id источника ><id получателей через пробел> <b>—</b> <u>Простой репост</u>\n'
+                    '• <b>rr</b> <id источника ><id получателей через пробел> <шанс репоста> <b>—</b> <u>Репост с вероятностью</u>\n'
+                    '• <b>pr</b> <id источника ><id получателей через пробел> <b>—</b> <u>Репост предыдущего поста</u>\n'
+                    '• <b>ppr</b> <id источника ><id получателей через пробел> <b>—</b> <u>Репост пред-предыдущего поста</u>\n'
+                    '• <b>pppr</b> <id источника ><id получателей через пробел> <b>—</b> <u>Репост пред-пред-предыдущего поста</u>\n'
+                    '• <b>rm</b> <id источника ><id получателей через пробел> <задержка в минутах> <b>—</b> <u>Репост с задержкой</u>\n'
+                    '• <b>rrm</b> <id источника ><id получателей через пробел> <шанс репоста> <задержка в минутах> <b>—</b> <u>Рандомный репост с задержкой</u>\n'
+                    '• <b>prrm</b> <id источника ><id получателей через пробел> <шанс репоста> <задержка в минутах> <b>—</b> <u>Рандомный репост предыдущего поста с задержкой</u>\n'
+                    '• <b>pprrm</b> <id источника ><id получателей через пробел> <шанс репоста> <задержка в минутах> <b>—</b> <u>Рандомный репост пред-предыдущего поста с задержкой</u>\n'
+                    '• <b>ppprrm</b> <id источника ><id получателей через пробел> <шанс репоста> <задержка в минутах> <b>—</b> <u>Рандомный репост пред-пред-предыдущего поста с задержкой</u>')
+            await message.reply(text, parse_mode='HTML', link_preview=False)
     except Exception as e:
-        logging.exception("Произошла ошибка в create_task:")
+        pass
 
 
 async def send_message_group(messages, task):
@@ -277,15 +277,14 @@ async def send_message_group(messages, task):
                 while True:
                     try:
                         await client.forward_messages(int(to_channel_id), message, int(messages.channel_id))
-                        time.sleep(2)
-                        break
+                        return True
                     except telethon.errors.FloodWaitError:
                         time.sleep(3)
             except Exception as e:
-                logging.error(f'⭕️ Не удалось переслать сообщение!\n'
-                              f'Подзадача {task.id}')
+                await sync_to_async(messages.delete)()
+                return False
     except Exception as e:
-        logging.exception("Произошла ошибка в send_message_group:")
+        pass
 
 
 async def create_or_ad_message(channel_id, message_id, grouped_id):
@@ -306,25 +305,28 @@ async def create_or_ad_message(channel_id, message_id, grouped_id):
             return message
         return msg[0]
     except Exception as e:
-        logging.exception("Произошла ошибка в create_or_ad_message:")
+        pass
 
 
 async def channel_check(message, album=False):
     """Проверяет сообщения в канале и выполняет задачи.
     """
     try:
-        channel_id = message.message.peer_id.channel_id
+        try:
+            channel_id = message.message.peer_id.channel_id
+        except Exception:
+            channel_id = message.chat.id
         tasks = await sync_to_async(list)(Tasks.objects.filter(from_channel__icontains=channel_id))
         grouped_id = message.grouped_id
         message_id = message.id
+        asd = datetime.datetime.now()
         while True:
+            channel = await sync_to_async(Channel.objects.get)(channel_id=channel_id)
             try:
-                channel = await sync_to_async(Channel.objects.get)(channel_id=channel_id)
                 if message_id == 1:
                     break
                 elif str(message_id - 1) == channel.last_message_id:
                     break
-                tm.sleep(0.01)
             except Exception as e:
                 logging.error(f'Не смог найти канал {channel_id}: {e}')
         for task in tasks:
@@ -332,12 +334,25 @@ async def channel_check(message, album=False):
             now_time = timezone.now() + datetime.timedelta(hours=3)
             if (global_task.start_date and now_time < global_task.start_date) or (
                     global_task.end_date and now_time >= global_task.end_date):
-                task.is_active = False
-                await sync_to_async(task.save)(update_fields=['is_active'])
+                if task.is_active != False:
+                    task.is_active = False
+                    await sync_to_async(task.save)(update_fields=['is_active'])
+                    if global_task.end_date and now_time >= global_task.end_date:
+                        await client.send_message(595650100,
+                                                  f'❌ <b>Задача {global_task.id} удалена согласно времени</b>',
+                                                  parse_mode='HTML')
+                        await sync_to_async(task.delete)()
             elif (global_task.start_date and timezone.now() >= global_task.start_date) or (
                     global_task.end_date and timezone.now() < global_task.end_date):
-                task.is_active = True
-                await sync_to_async(task.save)(update_fields=['is_active'])
+                if task.is_active != True:
+                    task.is_active = True
+                    await sync_to_async(task.save)(update_fields=['is_active'])
+                    if global_task.start != True:
+                        global_task.start = True
+                        await sync_to_async(global_task.save)(update_fields=['start'])
+                        await client.send_message(595650100,
+                                                  f'✅ <b>Задача {global_task.id} запущена согласно времени</b>',
+                                                  parse_mode='HTML')
 
             if task.is_active and not task.is_pause:
                 if task.type == 'r':
@@ -361,6 +376,9 @@ async def channel_check(message, album=False):
                                                            grouped_id=grouped_id)
                         except Exception as e:
                             logging.error(f'Ошибка при пересылке сообщения из {channel_id}: {e}')
+
+
+
                 elif task.type == 'rr':
                     if random.randint(1, 100) <= task.chance:
                         for to_channel_id in task.to_channel.split(','):
@@ -379,19 +397,18 @@ async def channel_check(message, album=False):
                     else:
                         await create_or_ad_message(channel_id=channel_id, message_id=message_id,
                                                    grouped_id=grouped_id)
+
+
+
                 elif task.type == 'pr':
-                    if not grouped_id or not await sync_to_async(list)(Messages.objects.filter(grouped_id=grouped_id)):
-                        messages = await sync_to_async(list)(
-                            Messages.objects.filter(channel_id=channel_id, is_send=False))
-                        if messages:
-                            for message in messages[::-1]:
-                                if str(message_id) not in message.messages_id:
-                                    await send_message_group(message, task)
+                    messages = await sync_to_async(list)(
+                        Messages.objects.filter(channel_id=channel_id, is_send=False))
+                    if messages:
+                        for message in messages[::-1]:
+                            if str(message_id) not in message.messages_id:
+                                if await send_message_group(message, task):
                                     break
 
-                        else:
-                            logging.warning("Нет предыдущих сообщений для отправки (previousrepost)")
-
                     if album:
                         for msg in album:
                             await create_or_ad_message(channel_id=channel_id, message_id=msg.id,
@@ -399,21 +416,20 @@ async def channel_check(message, album=False):
                     else:
                         await create_or_ad_message(channel_id=channel_id, message_id=message_id,
                                                    grouped_id=grouped_id)
+
+
+
                 elif task.type == 'ppr':
-                    if not grouped_id or not await sync_to_async(list)(Messages.objects.filter(grouped_id=grouped_id)):
-                        messages = await sync_to_async(list)(
-                            Messages.objects.filter(channel_id=channel_id, is_send=False))
-                        if messages:
-                            n = 1
-                            for message in messages[::-1]:
-                                if str(message_id) not in message.messages_id:
-                                    if n == 0:
-                                        await send_message_group(message, task)
+                    messages = await sync_to_async(list)(
+                        Messages.objects.filter(channel_id=channel_id, is_send=False))
+                    if messages:
+                        n = 1
+                        for message in messages[::-1]:
+                            if str(message_id) not in message.messages_id:
+                                if n <= 0:
+                                    if await send_message_group(message, task):
                                         break
-                                    n -= 1
-
-                        else:
-                            logging.warning("Нет предыдущих сообщений для отправки (previousrepost)")
+                                n -= 1
 
                     if album:
                         for msg in album:
@@ -422,21 +438,20 @@ async def channel_check(message, album=False):
                     else:
                         await create_or_ad_message(channel_id=channel_id, message_id=message_id,
                                                    grouped_id=grouped_id)
+
+
+
                 elif task.type == 'pppr':
-                    if not grouped_id or not await sync_to_async(list)(Messages.objects.filter(grouped_id=grouped_id)):
-                        messages = await sync_to_async(list)(
-                            Messages.objects.filter(channel_id=channel_id, is_send=False))
-                        if messages:
-                            n = 2
-                            for message in messages[::-1]:
-                                if str(message_id) not in message.messages_id:
-                                    if n == 0:
-                                        await send_message_group(message, task)
+                    messages = await sync_to_async(list)(
+                        Messages.objects.filter(channel_id=channel_id, is_send=False))
+                    if messages:
+                        n = 2
+                        for message in messages[::-1]:
+                            if str(message_id) not in message.messages_id:
+                                if n <= 0:
+                                    if await send_message_group(message, task):
                                         break
-                                    n -= 1
-
-                        else:
-                            logging.warning("Нет предыдущих сообщений для отправки (previousrepost)")
+                                n -= 1
 
                     if album:
                         for msg in album:
@@ -445,6 +460,8 @@ async def channel_check(message, album=False):
                     else:
                         await create_or_ad_message(channel_id=channel_id, message_id=message_id,
                                                    grouped_id=grouped_id)
+
+
 
                 elif task.type == 'rm':
                     if not grouped_id or not await sync_to_async(list)(Messages.objects.filter(grouped_id=grouped_id)):
@@ -452,13 +469,16 @@ async def channel_check(message, album=False):
                         if album:
                             for msg in album:
                                 need_mesage = await create_or_ad_message(channel_id=channel_id, message_id=msg.id,
-                                                           grouped_id=grouped_id)
+                                                                         grouped_id=grouped_id)
                         else:
                             need_mesage = await create_or_ad_message(channel_id=channel_id, message_id=message_id,
-                                                       grouped_id=grouped_id)
+                                                                     grouped_id=grouped_id)
                         await sync_to_async(SendMessageTask.objects.create)(task=task, message=need_mesage, time=time)
 
                     await create_or_ad_message(channel_id=channel_id, message_id=message_id, grouped_id=grouped_id)
+
+
+
                 elif task.type == 'rrm':
                     if random.randint(1, 100) <= task.chance and (
                             not grouped_id or not await sync_to_async(list)(
@@ -477,26 +497,27 @@ async def channel_check(message, album=False):
                         if album:
                             for msg in album:
                                 need_mesage = await create_or_ad_message(channel_id=channel_id, message_id=msg.id,
-                                                           grouped_id=grouped_id)
+                                                                         grouped_id=grouped_id)
                         else:
                             need_mesage = await create_or_ad_message(channel_id=channel_id, message_id=message_id,
-                                                       grouped_id=grouped_id)
+                                                                     grouped_id=grouped_id)
+
+
+
                 elif task.type == 'prrm':
                     if random.randint(1, 100) <= task.chance:
                         time = timezone.now() + datetime.timedelta(minutes=task.time)
-                        if not grouped_id or not await sync_to_async(list)(
-                                Messages.objects.filter(grouped_id=grouped_id)):
-                            messages = await sync_to_async(list)(
-                                Messages.objects.filter(channel_id=channel_id, is_send=False))
-                            if messages:  # Проверяем, есть ли сообщения в списке
-                                for message in messages[::-1]:
-                                    if str(message_id) not in message.messages_id:
-                                        await sync_to_async(SendMessageTask.objects.create)(task=task, message=message, time=time)
+                        messages = await sync_to_async(list)(
+                            Messages.objects.filter(channel_id=channel_id, is_send=False))
+                        if messages:  # Проверяем, есть ли сообщения в списке
+                            for message in messages[::-1]:
+                                if str(message_id) not in message.messages_id:
+                                    if await client.get_messages(channel_id, int(message.messages_id.split(',')[0])):
+                                        await sync_to_async(SendMessageTask.objects.create)(task=task, message=message,
+                                                                                            time=time)
                                         break
-
-                            else:
-                                logging.warning(
-                                    "Нет предыдущих сообщений для отправки (previousrepostrandomrepostminutes)")
+                                    else:
+                                        await sync_to_async(message.delete)()
                     if album:
                         for msg in album:
                             await create_or_ad_message(channel_id=channel_id, message_id=msg.id,
@@ -504,25 +525,28 @@ async def channel_check(message, album=False):
                     else:
                         await create_or_ad_message(channel_id=channel_id, message_id=message_id,
                                                    grouped_id=grouped_id)
+
+
+
                 elif task.type == 'pprrm':
                     if random.randint(1, 100) <= task.chance:
                         time = timezone.now() + datetime.timedelta(minutes=task.time)
-                        if not grouped_id or not await sync_to_async(list)(
-                                Messages.objects.filter(grouped_id=grouped_id)):
-                            messages = await sync_to_async(list)(
-                                Messages.objects.filter(channel_id=channel_id, is_send=False))
-                            if messages:  # Проверяем, есть ли сообщения в списке
-                                n = 1
-                                for message in messages[::-1]:
-                                    if str(message_id) not in message.messages_id:
-                                        if n == 0:
-                                            await sync_to_async(SendMessageTask.objects.create)(task=task, message=message, time=time)
+                        messages = await sync_to_async(list)(
+                            Messages.objects.filter(channel_id=channel_id, is_send=False))
+                        if messages:  # Проверяем, есть ли сообщения в списке
+                            n = 1
+                            for message in messages[::-1]:
+                                if str(message_id) not in message.messages_id:
+                                    if n <= 0:
+                                        if await client.get_messages(channel_id,
+                                                                     int(message.messages_id.split(',')[0])):
+                                            await sync_to_async(SendMessageTask.objects.create)(task=task,
+                                                                                                message=message,
+                                                                                                time=time)
                                             break
-                                        n -= 1
-
-                            else:
-                                logging.warning(
-                                    "Нет предыдущих сообщений для отправки (previousrepostrandomrepostminutes)")
+                                        else:
+                                            await sync_to_async(message.delete)()
+                                    n -= 1
 
                     if album:
                         for msg in album:
@@ -531,25 +555,26 @@ async def channel_check(message, album=False):
                     else:
                         await create_or_ad_message(channel_id=channel_id, message_id=message_id,
                                                    grouped_id=grouped_id)
+
+
+
                 elif task.type == 'ppprrm':
                     if random.randint(1, 100) <= task.chance:
                         time = timezone.now() + datetime.timedelta(minutes=task.time)
-                        if not grouped_id or not await sync_to_async(list)(
-                                Messages.objects.filter(grouped_id=grouped_id)):
-                            messages = await sync_to_async(list)(
-                                Messages.objects.filter(channel_id=channel_id, is_send=False))
-                            if messages:  # Проверяем, есть ли сообщения в списке
-                                for message in messages[::-1]:
-                                    n = 2
-                                    if str(message_id) not in message.messages_id:
-                                        if n == 0:
-                                            await sync_to_async(SendMessageTask.objects.create)(task=task, message=message, time=time)
-                                            break
-                                        n -= 1
-
-                            else:
-                                logging.warning(
-                                    "Нет предыдущих сообщений для отправки (previousrepostrandomrepostminutes)")
+                        messages = await sync_to_async(list)(
+                            Messages.objects.filter(channel_id=channel_id, is_send=False))
+                        if messages:  # Проверяем, есть ли сообщения в списке
+                            for message in messages[::-1]:
+                                n = 2
+                                if n <= 0:
+                                    if await client.get_messages(channel_id, int(message.messages_id.split(',')[0])):
+                                        await sync_to_async(SendMessageTask.objects.create)(task=task,
+                                                                                            message=message,
+                                                                                            time=time)
+                                        break
+                                    else:
+                                        await sync_to_async(message.delete)()
+                                    n -= 1
 
                     if album:
                         for msg in album:
@@ -558,33 +583,36 @@ async def channel_check(message, album=False):
                     else:
                         await create_or_ad_message(channel_id=channel_id, message_id=message_id,
                                                    grouped_id=grouped_id)
-        channel.last_message_id = message_id
+        if album:
+            channel.last_message_id = album[-1].id
+        else:
+            channel.last_message_id = message_id
         await sync_to_async(channel.save)(update_fields=['last_message_id'])
-
+        print(f'{message_id} {datetime.datetime.now()-asd}')
     except Exception as e:
-        logging.exception("Произошла ошибка в channel_check:")
+        pass
+
 
 @client.on(events.Album())
-async def handler(event):
-    message = event.message
+async def handler(message):
     if message.is_channel and await sync_to_async(list)(
-            Tasks.objects.filter(from_channel=message.message.peer_id.channel_id)):
-        await channel_check(message, event.messages)
+            Tasks.objects.filter(from_channel=message.chat.id)):
+        await channel_check(message.messages[0], message.messages)
+
 
 @client.on(events.NewMessage())
 async def mk(message):
     """Обрабатывает новые сообщения.
     """
     try:
-        if message.is_channel and await sync_to_async(list)(
-                Tasks.objects.filter(from_channel=message.message.peer_id.channel_id)):
-            await channel_check(message)
-        elif message.is_private and message.sender_id in [595650100, 1288389919, 8175762996]:
-            await create_task(message)
-        else:
-            logging.debug(f"Сообщение проигнорировано (не канал или не от доверенного пользователя)")
+        if not message.message.grouped_id:
+            if message.is_channel and await sync_to_async(list)(
+                    Tasks.objects.filter(from_channel=message.message.peer_id.channel_id)):
+                await channel_check(message)
+            elif message.is_private and message.sender_id in [595650100, 1288389919, 8175762996]:
+                await create_task(message)
     except Exception as e:
-        logging.exception("Произошла ошибка в mk:")
+        pass
 
 
 async def send_time_message():
@@ -600,7 +628,7 @@ async def send_time_message():
                     await sync_to_async(message.delete)()
             # Заменено time.sleep на asyncio.sleep
         except Exception as e:
-            logging.exception("Произошла ошибка в send_time_message:")
+            pass
         await asyncio.sleep(1)
 
 

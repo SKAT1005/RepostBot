@@ -4,6 +4,7 @@ class GlobalNumber(models.Model):
     description = models.TextField(blank=True, null=True, verbose_name='Описание задачи')
     start_date = models.DateTimeField(blank=True, null=True, verbose_name='Дата начала парсинга')
     end_date = models.DateTimeField(blank=True, null=True, verbose_name='Дата конца парсинга')
+    start = models.BooleanField(default=False)
 
     def start_date_str(self):
         months = [
